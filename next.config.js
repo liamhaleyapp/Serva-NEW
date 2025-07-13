@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-}
-
-module.exports = nextConfig 
+  // Add your config options here
+};
+module.exports = nextConfig;

@@ -33,7 +33,7 @@ Return only the React component code starting with 'import' statements and endin
 `
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 4000,
       temperature: 0.1,

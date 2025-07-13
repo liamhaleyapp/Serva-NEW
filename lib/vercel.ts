@@ -31,8 +31,6 @@ export const deployToVercel = async (siteCode: string, projectName: string): Pro
       'next.config.js': `
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
   },
 }
 
