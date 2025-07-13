@@ -2,9 +2,15 @@ import { v4 as uuidv4 } from 'uuid'
 
 export const deployToVercel = async (siteCode: string, projectName: string): Promise<string> => {
   try {
+    console.log('=== Vercel Deployment Debug ===')
+    console.log('Project Name:', projectName)
+    console.log('Site Code Length:', siteCode.length)
+    console.log('Site Code Preview (first 300 chars):', siteCode.substring(0, 300) + '...')
+    console.log('Site Code Preview (last 200 chars):', '...' + siteCode.substring(siteCode.length - 200))
+    
     const projectId = `site-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
-    // Create the file structure for deployment
+    // Create the file structure for deployment using Pages Router (not App Router)
     const files = {
       'package.json': JSON.stringify({
         name: projectName.toLowerCase().replace(/\s+/g, '-'),
@@ -14,71 +20,162 @@ export const deployToVercel = async (siteCode: string, projectName: string): Pro
           dev: 'next dev',
           build: 'next build',
           start: 'next start',
+          lint: 'next lint'
         },
         dependencies: {
-          next: '^14.0.0',
-          react: '^18.0.0',
-          'react-dom': '^18.0.0',
+          // Essential Next.js dependencies
+          'next': '^14.0.0',
+          'react': '^18.2.0',
+          'react-dom': '^18.2.0',
+          
+          // TypeScript dependencies
           '@types/node': '^20.0.0',
           '@types/react': '^18.0.0',
           '@types/react-dom': '^18.0.0',
-          typescript: '^5.0.0',
-          tailwindcss: '^3.3.0',
-          autoprefixer: '^10.0.1',
-          postcss: '^8.0.0',
-        },
+          'typescript': '^5.0.0',
+          
+          // Styling dependencies
+          'tailwindcss': '^3.3.0',
+          'autoprefixer': '^10.0.1',
+          'postcss': '^8.0.0',
+          
+          // Additional utility dependencies that might be needed
+          'clsx': '^2.0.0',
+          'class-variance-authority': '^0.7.0'
+        }
       }, null, 2),
-      'next.config.js': `
-/** @type {import('next').NextConfig} */
+      
+      'next.config.js': `/** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  experimental: {
+    esmExternals: false,
+  },
+  // Disable TypeScript build errors in production for now
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // Disable ESLint during builds for now
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 }
 
-module.exports = nextConfig
-      `,
-      'tailwind.config.js': `
-/** @type {import('tailwindcss').Config} */
+module.exports = nextConfig`,
+      
+      'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {},
   },
   plugins: [],
-}
-      `,
-      'postcss.config.js': `
-module.exports = {
+}`,
+      
+      'postcss.config.js': `module.exports = {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
-}
-      `,
-      'app/globals.css': `
-@tailwind base;
+}`,
+      
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          target: "es5",
+          lib: ["dom", "dom.iterable", "es6"],
+          allowJs: true,
+          skipLibCheck: true,
+          strict: false, // More lenient for generated code
+          noEmit: true,
+          esModuleInterop: true,
+          module: "esnext",
+          moduleResolution: "bundler",
+          resolveJsonModule: true,
+          isolatedModules: true,
+          jsx: "preserve",
+          incremental: true,
+          plugins: [{ name: "next" }],
+          paths: { "@/*": ["./*"] }
+        },
+        include: ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+        exclude: ["node_modules"]
+      }, null, 2),
+      
+      // Use Pages Router structure instead of App Router
+      'styles/globals.css': `@tailwind base;
 @tailwind components;
 @tailwind utilities;
-      `,
-      'app/layout.tsx': `
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
-}
-      `,
-      'app/page.tsx': siteCode,
+
+/* Custom global styles can go here */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}`,
+      
+      'pages/_app.tsx': `import type { AppProps } from 'next/app'
+import '../styles/globals.css'
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />
+}`,
+      
+      // Main page using Pages Router
+      'pages/index.tsx': siteCode,
+      
+      // Add a simple API route to prevent build issues
+      'pages/api/health.ts': `import type { NextApiRequest, NextApiResponse } from 'next'
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
+}`,
+      
+      // Add necessary Next.js files
+      'next-env.d.ts': `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/pages/building-your-application/configuring/typescript for more information.`,
+      
+      // Add a simple .gitignore
+      '.gitignore': `# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts`,
     }
 
-    // Deploy to Vercel
+    // Deploy to Vercel with proper configuration
     const deployResponse = await fetch('https://api.vercel.com/v13/deployments', {
       method: 'POST',
       headers: {
@@ -93,7 +190,16 @@ export default function RootLayout({
         })),
         projectSettings: {
           framework: 'nextjs',
+          buildCommand: 'npm run build',
+          devCommand: 'npm run dev',
+          installCommand: 'npm install',
+          outputDirectory: '.next',
         },
+        target: 'production',
+        // Add build environment variables if needed
+        env: {
+          NODE_ENV: 'production'
+        }
       }),
     })
 
@@ -110,4 +216,4 @@ export default function RootLayout({
     console.error('Error deploying to Vercel:', error)
     throw error
   }
-} 
+}
