@@ -34,6 +34,7 @@ export default async function handler(
 
     // Step 2: Generate site code with OpenAI
     console.log('Generating site code with OpenAI...')
+    console.log('OpenAI Key:', process.env.OPENAI_API_KEY?.slice(0, 8));
     const siteCode = await generateSiteCode(
       agentResult.agentJson, 
       agentResult.agentName,
