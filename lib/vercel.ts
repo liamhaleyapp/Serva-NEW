@@ -48,20 +48,9 @@ export const deployToVercel = async (siteCode: string, projectName: string): Pro
       'next.config.js': `/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    esmExternals: false,
-  },
-  // Disable TypeScript build errors in production for now
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // Disable ESLint during builds for now
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-}
-
-module.exports = nextConfig`,
+  // No 'output: export'!
+};
+module.exports = nextConfig;`,
       
       'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
 module.exports = {

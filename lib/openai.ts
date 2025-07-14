@@ -10,56 +10,39 @@ export const generateSiteCode = async (agentJson: any, agentName?: string, impro
 Generate a complete Next.js React component for a dynamic agent interface based on this agent specification:
 
 Agent Name: ${agentName || 'Custom Agent'}
+Agent ID: ${agentName || 'Custom Agent'} (use this as the agentId when calling /api/ask-agent)
 Improved Prompt: ${improvedPrompt || 'No additional context'}
 
 Agent JSON Configuration:
 ${JSON.stringify(agentJson, null, 2)}
 
 CRITICAL REQUIREMENTS:
-1. Return ONLY the React component code - NO markdown formatting, NO code blocks, NO explanatory text
-2. Start directly with import statements
-3. End with the component export
-4. Create a functional React component using Next.js Pages Router (NOT App Router)
-5. Component should be a default export from pages/index.tsx
-6. Include proper TypeScript types and import statements
-7. Use Tailwind CSS for modern, professional styling (only standard utility classes)
-8. Make it responsive and visually appealing
-9. Include form validation where appropriate
-10. Handle the agent's specific functionality as described in the JSON
-11. Include a header with the agent name and description
-12. Add interactive elements that make sense for this specific agent
-13. Include loading states and error handling
-14. Make it a complete, self-contained page component
-15. DO NOT use any external dependencies beyond React, Next.js, and Tailwind
-16. DO NOT import any custom components or utilities
-17. Include proper Next.js Head component for SEO
-18. Ensure all code is production-ready and follows TypeScript best practices
+1. On form submit, POST the user's plain text query and the agent's unique ID to /api/ask-agent as JSON: { query, agentId }.
+2. Use "${agentName || 'Custom Agent'}" as the agentId value.
+3. Display the response from the backend in the UI.
+4. Do NOT use mock data. Do NOT use JSON.parse on user input.
+5. Assume the backend endpoint will use the agent's JSON to call NeuralSeek and return the answer.
+6. Use the built-in fetch API for all HTTP requests. Do NOT use axios or any other external HTTP library.
+7. Return ONLY the React component code - NO markdown formatting, NO code blocks, NO explanatory text
+8. Start directly with import statements
+9. End with the component export
+10. Create a functional React component using Next.js Pages Router (NOT App Router)
+11. Component should be a default export from pages/index.tsx
+12. Include proper TypeScript types
+13. Use Tailwind CSS for styling
+14. Include error handling for the API call
+15. Show loading state while waiting for response
+16. Do NOT wrap in markdown code blocks, do NOT add explanations
 
-IMPORTANT: Return ONLY the raw TypeScript/React code. Do NOT wrap in markdown code blocks, do NOT add explanations, do NOT include any text outside the actual code.
+The component should have:
+- A form with an input field for the user's query
+- A submit button
+- Display area for the agent's response
+- Loading state
+- Error handling
+- Clean, modern UI with Tailwind CSS
 
-Example of what to return (start exactly like this):
-import { useState } from 'react'
-import Head from 'next/head'
-
-export default function AgentPage() {
-  // Component logic here
-  
-  return (
-    <>
-      <Head>
-        <title>${agentName || 'Custom Agent'}</title>
-        <meta name="description" content="..." />
-      </Head>
-      
-      <div className="min-h-screen bg-gray-50">
-        {/* Component JSX here */}
-      </div>
-    </>
-  )
-}
-
-Focus on creating an interface that effectively serves the agent's intended purpose and provides excellent user experience.
-`
+Generate the complete React component code:`
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo",
@@ -68,7 +51,7 @@ Focus on creating an interface that effectively serves the agent's intended purp
       temperature: 0.1,
     })
 
-    let generatedCode = completion.choices[0]?.message?.content || ''
+    let generatedCode = completion.choices[0].message.content || ''
     
     // Clean up the response to remove any markdown formatting
     generatedCode = generatedCode.trim()
@@ -82,6 +65,19 @@ Focus on creating an interface that effectively serves the agent's intended purp
         generatedCode = lines.slice(startIndex + 1, endIndex).join('\n')
       }
     }
+
+    // Fallback: Replace axios usage with fetch if present
+    if (generatedCode.includes('axios')) {
+      generatedCode = generatedCode.replace(/import axios[^;]*;?\n?/g, '')
+      generatedCode = generatedCode.replace(/axios\.post\s*\(([^,]+),\s*([^\)]+)\)/g, 'fetch($1, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify($2) }).then(res => res.json())')
+      generatedCode = generatedCode.replace(/axios\.get\s*\(([^\)]+)\)/g, 'fetch($1).then(res => res.json())')
+    }
+
+    // Enforce POST for fetch calls to /api/ask-agent
+    generatedCode = generatedCode.replace(/fetch\((['"])\/api\/ask-agent\1(,\s*\{[^\}]*\})?\)/g, (match, quote, options) => {
+      if (options && options.includes('method')) return match; // already has method
+      return `fetch('/api/ask-agent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, agentId }) })`;
+    });
     
     // Remove any trailing explanatory text
     const codeEndMarkers = [

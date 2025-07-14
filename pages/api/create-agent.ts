@@ -3,6 +3,7 @@ import { createAgent } from '../../lib/neuralseek'
 import { generateSiteCode } from '../../lib/openai'
 import { deployToVercel } from '../../lib/vercel'
 import { logProjectToSupabase } from '../../lib/supabase'
+import { storeAgentJson } from './ask-agent'
 import { v4 as uuidv4 } from 'uuid'
 
 export default async function handler(
@@ -48,6 +49,11 @@ export default async function handler(
     console.log('Agent JSON Preview:', JSON.stringify(agentResult.agentJson, null, 2).substring(0, 500) + '...')
     console.log('Agent Name:', agentResult.agentName)
     console.log('Improved Prompt:', agentResult.improvedPrompt)
+
+    // Store the agent JSON for later use by ask-agent endpoint
+    const agentId = agentResult.agentName || `agent-${Date.now()}`
+    storeAgentJson(agentId, agentResult.agentJson)
+    console.log('✅ Stored agent JSON for ID:', agentId)
 
     // Step 2: Generate site code with OpenAI
     console.log('Step 2: Generating site code with OpenAI...')
