@@ -27,6 +27,8 @@ export default async function handler(
 
     // Step 1: Create agent with NeuralSeek
     console.log('Step 1: Creating agent with NeuralSeek...')
+    console.log('Input to NeuralSeek:', { description, projectName })
+    
     const agentResult = await createAgent(description)
     
     if (!agentResult.success) {
@@ -49,6 +51,12 @@ export default async function handler(
     console.log('Agent JSON Preview:', JSON.stringify(agentResult.agentJson, null, 2).substring(0, 500) + '...')
     console.log('Agent Name:', agentResult.agentName)
     console.log('Improved Prompt:', agentResult.improvedPrompt)
+    console.log('Full NeuralSeek Response Keys:', Object.keys(agentResult.fullResponse || {}))
+    
+    // Add complete JSON logging
+    console.log("=== COMPLETE EXTRACTED JSON ===");
+    console.log(JSON.stringify(agentResult.agentJson, null, 2));
+    console.log("=== END COMPLETE JSON ===");
 
     // Store the agent JSON for later use by ask-agent endpoint
     const agentId = agentResult.agentName || `agent-${Date.now()}`
@@ -57,9 +65,12 @@ export default async function handler(
 
     // Step 2: Generate site code with OpenAI
     console.log('Step 2: Generating site code with OpenAI...')
+    console.log('Input to OpenAI - Agent JSON (first 300 chars):', JSON.stringify(agentResult.agentJson).substring(0, 300) + '...')
+    console.log('Input to OpenAI - Agent Name:', agentResult.agentName)
+    console.log('Input to OpenAI - Improved Prompt:', agentResult.improvedPrompt)
     
     const siteCode = await generateSiteCode(
-      agentResult.agentJson, 
+      agentResult.agentJson,
       agentResult.agentName,
       agentResult.improvedPrompt
     )

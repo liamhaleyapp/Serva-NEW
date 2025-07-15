@@ -8,8 +8,12 @@ export const deployToVercel = async (siteCode: string, projectName: string): Pro
     console.log('Site Code Preview (first 300 chars):', siteCode.substring(0, 300) + '...')
     console.log('Site Code Preview (last 200 chars):', '...' + siteCode.substring(siteCode.length - 200))
     
-    const projectId = `site-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
+    // Clean up the generated code to remove markdown/code block delimiters
+    const cleanedSiteCode = siteCode
+      .replace(/```[a-z]*\n?/g, '') // Remove code block delimiters like ```ts or ```jsx
+      .replace(/```/g, '')           // Remove any remaining backticks
+      .trim();
+
     // Create the file structure for deployment using Pages Router (not App Router)
     const files = {
       'package.json': JSON.stringify({
@@ -112,7 +116,7 @@ export default function App({ Component, pageProps }: AppProps) {
 }`,
       
       // Main page using Pages Router
-      'pages/index.tsx': siteCode,
+      [`pages/agents/${projectName.replace(/[^a-zA-Z0-9_-]/g, '')}.tsx`]: cleanedSiteCode,
       
       // Add a simple API route to prevent build issues
       'pages/api/health.ts': `import type { NextApiRequest, NextApiResponse } from 'next'

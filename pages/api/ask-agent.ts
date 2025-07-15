@@ -57,20 +57,42 @@ async function callNeuralSeek(agentJson: any, query: string) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    console.log('=== ASK-AGENT API CALLED ===')
+    console.log('Method:', req.method)
+    console.log('Headers:', req.headers)
+    console.log('Body:', req.body)
+    console.log('Query params:', req.query)
+    
     if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
+      console.log('❌ Method not allowed:', req.method)
+      return res.status(405).json({ error: 'Method not allowed. Only POST requests are accepted.' });
     }
+    
     const { query, agentId } = req.body;
+    console.log('Extracted query:', query)
+    console.log('Extracted agentId:', agentId)
+    
     if (!query || !agentId) {
+      console.log('❌ Missing required fields')
       return res.status(400).json({ error: 'Query and agentId are required' });
     }
+    
     const agentJson = agentJsonMap[agentId];
+    console.log('Available agent IDs:', Object.keys(agentJsonMap))
+    console.log('Found agent JSON:', !!agentJson)
+    
     if (!agentJson) {
+      console.log('❌ Agent not found:', agentId)
       return res.status(404).json({ error: 'Agent not found. Please create the agent first.' });
     }
+    
+    console.log('✅ Calling NeuralSeek with agent:', agentJson?.info?.title)
     const result = await callNeuralSeek(agentJson, query);
+    console.log('✅ NeuralSeek response received')
+    
     return res.status(200).json(result);
   } catch (error) {
+    console.error('❌ Error in ask-agent API:', error)
     // Always return a valid JSON error response
     return res.status(500).json({ error: 'Failed to get answer from NeuralSeek', details: (error instanceof Error ? error.message : String(error)) });
   }
