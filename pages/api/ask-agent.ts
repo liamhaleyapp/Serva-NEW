@@ -5,6 +5,9 @@ const agentJsonMap: Record<string, any> = {
   // This will be populated when agents are created
 };
 
+// Function to get the agent JSON map
+export const getAgentJsonMap = () => agentJsonMap;
+
 // Function to store agent JSON when created
 export const storeAgentJson = (agentId: string, agentJson: any) => {
   agentJsonMap[agentId] = agentJson;

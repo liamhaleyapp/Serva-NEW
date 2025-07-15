@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 
 export default function Home() {
   const [description, setDescription] = useState('')
@@ -58,6 +59,14 @@ export default function Home() {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Describe your ideal AI agent and we'll build a custom web interface for it instantly
             </p>
+            <div className="mt-6">
+              <Link
+                href="/agents"
+                className="inline-block text-blue-600 hover:text-blue-800 font-medium"
+              >
+                View All Agents →
+              </Link>
+            </div>
           </div>
 
           <div className="max-w-2xl mx-auto">
@@ -127,13 +136,11 @@ export default function Home() {
                       Agent Name: {result.agentName || 'Custom Agent'}
                     </p>
                     <p className="text-green-600 text-sm mt-1">
-                      Your agent has been built and deployed. You can access it at:
+                      Your agent has been created successfully! You can interact with it here:
                     </p>
                   </div>
                   <a
-                    href={result.deploymentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/agents/${result.agentName}`}
                     className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
                   >
                     View Your Agent →
